@@ -1,0 +1,179 @@
+namespace TestKniznice;
+
+using KST.SharpDiffLib.Definition;
+using KST.SharpDiffLib.Algorithms.ResolveConflicts;
+using KST.SharpDiffLib.Algorithms.MergeDiffs;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using KST.SharpDiffLib.ConflictManagement;
+
+using Bogus;
+
+public static class Program
+{
+    private class Merger : MergerDefinition<Merger>
+    {
+        private Merger()
+        {
+            // Person: preferuj pravú verziu pri konflikte
+            Define<Person>()
+                .ResolveAllSameRules(def => def
+                    .Action(ResolveAction.UseRight)
+                );
+
+            // pole Person[] - zoradená kolekcia objektov Person
+            Define<Person[]>()
+                .MergeOrderedCollectionDiffsRules()
+                .ResolveAllSameRules(def => def
+                    .Action(ResolveAction.UseRight)
+                );
+
+            // zoradená kolekcia (pole): preferuj ľavú verziu pri konflikte
+            Define<int[]>()
+                .MergeOrderedCollectionDiffsRules()
+                .ResolveAllSameRules(def => def
+                    .Action(ResolveAction.UseLeft)
+                );
+
+            // nenezoradená kolekcia (set) - preferuj pravú a potom ľavú (obe) verziu pri konflikte
+            Define<HashSet<int>>()
+                .MergeUnorderedCollectionDiffsRules()
+                .ResolveAllSameRules(def => def
+                    .Action(ResolveAction.RightThenLeft)
+                );
+        }
+    }
+
+    public static void Main()
+    {
+        // Pole Person (nový tester) - pridané dve osoby do každého poľa
+        MergeAndPrint("Zlúčenie pola osôb (Person[])",
+            new Person[] {
+                new Person { Name = "John", Age = 30 },
+                new Person { Name = "Alice", Age = 28 },
+                new Person { Name = "Bob", Age = 25 }
+            },
+            new Person[] {
+                new Person { Name = "John", Age = 31 },
+                new Person { Name = "Alice", Age = 28 },
+                new Person { Name = "Bob", Age = 25 }
+            },
+            new Person[] {
+                new Person { Name = "John", Age = 32 },
+                new Person { Name = "Charlie", Age = 22 },
+                new Person { Name = "Bob", Age = 25 }
+            },
+            rightLabel: "Pravá strana"
+        );
+
+        // Trieda Person
+        MergeAndPrint("Zlúčenie triedy (Person)",
+            new Person { Name = "John", Age = 30 },
+            new Person { Name = "John", Age = 31 },
+            new Person { Name = "John", Age = 32 },
+            rightLabel: "Pravá strana"
+        );
+
+        // Zoradené pole
+        MergeAndPrint("Zlúčenie zoradených homogénnych (int[])",
+            new[] { 1, 2 },
+            new[] { 1, 2, 3 },   // ľavá pridala 3
+            new[] { 1, 2, 4 },   // pravá pridala 4
+            rightLabel: "Pravá strana"
+        );
+
+        // Nezoradený set
+        MergeAndPrint("Zlúčenie nezoradených homogénnych (HashSet<int>)",
+            new HashSet<int> { 1, 2 },
+            new HashSet<int> { 1, 2, 3 },   // ľavá pridala 3
+            new HashSet<int> { 1, 2, 4 },   // pravá pridala 4
+            rightLabel: "Pravá strana"
+        );
+
+        Console.WriteLine();
+        Console.WriteLine("Hotovo.");
+    }
+
+    private static void MergeAndPrint<T>(string title, T @base, T left, T right, string rightLabel = "Pravá strana")
+    {
+        Console.WriteLine($"=== {title} ===");
+        Console.WriteLine($"Základná verzia -> {FormatObj(@base)}");
+        Console.WriteLine($"Ľavá verzia     -> {FormatObj(left)}");
+        Console.WriteLine($"{rightLabel}    -> {FormatObj(right)}");
+
+        try
+        {
+            var merged = Merger.Instance.Merge(@base, left, right);
+            Console.WriteLine($"Zlúčený výsledok -> {FormatObj(merged)}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Chyba pri zlúčení: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        Console.WriteLine();
+    }
+
+    private static string FormatObj(object obj)
+    {
+        if (obj == null)
+            return "null";
+
+        if (obj is string s)
+            return $"\"{s}\"";
+
+        if (obj is IEnumerable e && !(obj is string))
+        {
+            var items = new List<string>();
+            foreach (var it in e)
+                items.Add(FormatElement(it));
+
+            var type = obj.GetType();
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(HashSet<>))
+                return "{" + string.Join(", ", items.OrderBy(x => x)) + "}";
+            else
+                return "[" + string.Join(", ", items) + "]";
+        }
+
+        return FormatElement(obj);
+    }
+
+    private static string FormatElement(object element)
+    {
+        if (element == null)
+            return "null";
+
+        if (element is string str)
+            return $"\"{str}\"";
+
+        var type = element.GetType();
+
+        // Primitive-like types: print directly
+        if (type.IsPrimitive || type.IsEnum || element is decimal)
+            return element.ToString();
+
+        // If element is a collection, delegate to FormatObj
+        if (element is IEnumerable && !(element is string))
+            return FormatObj(element);
+
+        // Otherwise format public properties (useful for Person)
+        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                        .Where(p => p.CanRead)
+                        .ToArray();
+
+        if (props.Length == 0)
+            return element.ToString();
+
+        var pairs = props.Select(p =>
+        {
+            object val;
+            try { val = p.GetValue(element); } catch { val = null; }
+            return $"{p.Name}={FormatObj(val)}";
+        });
+
+        return $"{type.Name}{{{string.Join(", ", pairs)}}}";
+    }
+}
