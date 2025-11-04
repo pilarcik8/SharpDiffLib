@@ -1,0 +1,21 @@
+{
+  "Title": "Mrs.",
+  "FirstName": "Karelle",
+  "LastName": "Corkery",
+  "Email": "Vanessa.Balistreri@gmail.com",
+  "Phone": "455-341-4708 x889",
+  "Gender": "Other",
+  "Age": 46,
+  "Company": "Lowe - Kohler",
+  "JobTitle": "Investor Communications Technician",
+  "CreditCardNumber": "3528-1499-1195-6912",
+  "Address": {
+    "Street": "Amina Skyway",
+    "StreetNumber": "50864",
+    "City": "New Gavinburgh",
+    "County": "Borders",
+    "State": "Pennsylvania",
+    "ZipCode": "28232-0164",
+    "Country": "Liechtenstein"
+  }
+}
