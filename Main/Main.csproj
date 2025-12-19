@@ -15,4 +15,9 @@
     <ProjectReference Include="..\SharpDiffLib\SharpDiffLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="input\" />
+    <Folder Include="output\" />
+  </ItemGroup>
+
 </Project>
