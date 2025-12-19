@@ -19,7 +19,6 @@ namespace TestKniznice
             {
                 Define<Person>();
             }
-
         }
 
         private class MergerSet : MergerDefinition<MergerSet>
@@ -28,7 +27,6 @@ namespace TestKniznice
             {
                 Define<HashSet<string>>();
             }
-
         }
 
         private class MergerList : MergerDefinition<MergerList>
@@ -40,17 +38,27 @@ namespace TestKniznice
         }
 
 
-        private const bool HashSetCollections = true;
-        private const bool HashListCollections = false;
-        private const bool Person = false;
+        private const bool HASH_SET_ENABLE = true;
+        private const bool LIST_ENABLE = false;
+        private const bool CLASS_PERSON_ENABLE = false;
 
-        private const int ITERATIONS = 100;
+        private const int MAX_ITERATION = 100;
 
         private const string InputFolder = "input";
 
         public static void Main()
         {
-            for (int iteration = 0; iteration < ITERATIONS; iteration++)
+            int enabledCount = 0;
+            if (HASH_SET_ENABLE) enabledCount++;
+            if (LIST_ENABLE) enabledCount++;
+            if (CLASS_PERSON_ENABLE) enabledCount++;
+            if (enabledCount != 1)
+            {
+                Console.WriteLine("Enable only one of HASH_SET_ENABLE, LIST_ENABLE, or CLASS_PERSON_ENABLE.");
+                return;
+            }
+
+            for (int iteration = 0; iteration < MAX_ITERATION; iteration++)
             {
                 string BaseFile = $"base{iteration}.xml";
                 string LeftFile = $"left{iteration}.xml";
@@ -72,7 +80,7 @@ namespace TestKniznice
                 var leftDoc = XDocument.Load(leftPath);
                 var rightDoc = XDocument.Load(rightPath);
 
-                if (Person)
+                if (CLASS_PERSON_ENABLE)
                 {
                     XmlSerializer serializer = new XmlSerializer(typeof(Person));
                     Person basePerson;
@@ -100,7 +108,7 @@ namespace TestKniznice
                     Export(resultPerson, null, null, $"merged_person_{iteration}");
                 }
 
-                if (HashSetCollections)
+                if (HASH_SET_ENABLE)
                 {
                     XmlSerializer serializer = new XmlSerializer(typeof(HashSet<string>));
                     HashSet<string> baseSet;
@@ -128,7 +136,7 @@ namespace TestKniznice
                     Export(null, resultSet, null, $"merged_set_{iteration}");
                 }
 
-                if (HashListCollections)
+                if (LIST_ENABLE)
                 {
                     XmlSerializer serializer = new XmlSerializer(typeof(List<string>));
                     List<string> baseList;
