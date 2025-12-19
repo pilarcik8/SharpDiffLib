@@ -13,18 +13,38 @@ namespace TestKniznice
 {
     public static class Program
     {
-        private class Merger : MergerDefinition<Merger>
+        private class MergerPerson : MergerDefinition<MergerPerson>
         {
-            private Merger()
-            {                Define<Person>();
+            private MergerPerson()
+            {
+                Define<Person>();
+            }
+
+        }
+
+        private class MergerSet : MergerDefinition<MergerSet>
+        {
+            private MergerSet()
+            {
+                Define<HashSet<string>>();
+            }
+
+        }
+
+        private class MergerList : MergerDefinition<MergerList>
+        {
+            private MergerList()
+            {
+                Define<List<string>>();
             }
         }
 
-        private const bool HashSetCollections = false;
-        private const bool HashListCollections = false;
-        private const bool Person = true;
 
-        private const int ITERATIONS = 1;
+        private const bool HashSetCollections = true;
+        private const bool HashListCollections = false;
+        private const bool Person = false;
+
+        private const int ITERATIONS = 100;
 
         private const string InputFolder = "input";
 
@@ -70,25 +90,82 @@ namespace TestKniznice
                     {
                         rightPerson = (Person)serializer.Deserialize(reader);
                     }
-                    
-                    var merger = Merger.Instance;
+
+                    var merger = MergerPerson.Instance;
                     Person resultPerson = merger.Merge(
                         basePerson,
                         leftPerson,
                         rightPerson
                     );
-                    ExportPerson(resultPerson, $"merged_person_{iteration}");
+                    Export(resultPerson, null, null, $"merged_person_{iteration}");
+                }
+
+                if (HashSetCollections)
+                {
+                    XmlSerializer serializer = new XmlSerializer(typeof(HashSet<string>));
+                    HashSet<string> baseSet;
+                    using (var reader = baseDoc.Root.CreateReader())
+                    {
+                        baseSet = (HashSet<string>)serializer.Deserialize(reader);
+                    }
+                    HashSet<string> leftSet;
+                    using (var reader = leftDoc.Root.CreateReader())
+                    {
+                        leftSet = (HashSet<string>)serializer.Deserialize(reader);
+                    }
+                    HashSet<string> rightSet;
+                    using (var reader = rightDoc.Root.CreateReader())
+                    {
+                        rightSet = (HashSet<string>)serializer.Deserialize(reader);
+                    }
+
+                    var merger = MergerSet.Instance;
+                    HashSet<string> resultSet = merger.Merge(
+                        baseSet,
+                        leftSet,
+                        rightSet
+                    );
+                    Export(null, resultSet, null, $"merged_set_{iteration}");
+                }
+
+                if (HashListCollections)
+                {
+                    XmlSerializer serializer = new XmlSerializer(typeof(List<string>));
+                    List<string> baseList;
+                    using (var reader = baseDoc.Root.CreateReader())
+                    {
+                        baseList = (List<string>)serializer.Deserialize(reader);
+                    }
+                    List<string> leftList;
+                    using (var reader = leftDoc.Root.CreateReader())
+                    {
+                        leftList = (List<string>)serializer.Deserialize(reader);
+                    }
+                    List<string> rightList;
+                    using (var reader = rightDoc.Root.CreateReader())
+                    {
+                        rightList = (List<string>)serializer.Deserialize(reader);
+                    }
+                    var merger = MergerList.Instance;
+                    List<string> resultList = merger.Merge(
+                        baseList,
+                        leftList,
+                        rightList
+                    );
+                    Export(null, null, resultList, $"merged_list_{iteration}");
                 }
             }
         }
 
-        private static void ExportPerson(Person person, string fileName = "person")
+        private static void Export(Person person, HashSet<string> set, List<string> list, string fileName)
         {
-            if (person == null)
-            {
-                Console.WriteLine("Person je null – export sa nevykoná.");
-                return;
-            }
+            int notNullCount = 0;
+            if (person != null) notNullCount++;
+            if (set != null) notNullCount++;
+            if (list != null) notNullCount++;
+
+            if (notNullCount != 1)
+                throw new ArgumentException("Only one of the parameters can be non-null.");
 
             try
             {
@@ -101,13 +178,32 @@ namespace TestKniznice
 
                 Console.WriteLine($"Výstupné súbory budú uložené do: {outputDir}");
                 string xmlPath = Path.Combine(outputDir, $"{fileName}.xml");
-                XmlSerializer xmlSerializer = new XmlSerializer(typeof(Person));
-                using (var writer = new StreamWriter(xmlPath))
+                if (person != null)
                 {
-                    xmlSerializer.Serialize(writer, person);
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(Person));
+                    using (var writer = new StreamWriter(xmlPath))
+                    {
+                        xmlSerializer.Serialize(writer, person);
+                    }
+                }
+                else if (set != null)
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(HashSet<string>));
+                    using (var writer = new StreamWriter(xmlPath))
+                    {
+                        xmlSerializer.Serialize(writer, set);
+                    }
+                }
+                else if (list != null)
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<string>));
+                    using (var writer = new StreamWriter(xmlPath))
+                    {
+                        xmlSerializer.Serialize(writer, list);
+                    }
                 }
                 Console.WriteLine($"XML uložený do: {xmlPath}");
-                
+
             }
             catch (Exception ex)
             {
