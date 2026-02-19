@@ -226,8 +226,9 @@ namespace TestKniznice
         public static string UserInputDirToFiles()
         {
             Console.WriteLine("V priečinku majte očíslované priečinky od 0");
-            Console.WriteLine("V očísloslovanom priečinku majte súbory expectedResult'číslo iterácie'.xml a mergedResult'číslo iterácie.xml'");
-            Console.WriteLine("Prvý priečinok by mal: '0/mergedResult0.xml' a '0/expectedResult0.xml'");
+            Console.WriteLine("Prvý priečinok by mal: '0/base0.xml', '0/left0.xml' a '0/right0.xml'");
+            Console.WriteLine("Druhý priečinok by mal: '1/base1.xml', '1/left1.xml' a '1/right1.xml'");
+            Console.WriteLine("A tak ďalej... Ak sa priečinok alebo súbor z danej iterácie nenájde, program končí.");
             Console.WriteLine("---------------------------------------------------------------------------------------------------------------");
             Console.WriteLine("Vložte absolútnu cestu k priečinku so súbormi");
 
