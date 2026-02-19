@@ -8,16 +8,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="output\**" />
+    <EmbeddedResource Remove="output\**" />
+    <None Remove="output\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Bogus" Version="35.6.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SharpDiffLib\SharpDiffLib.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="input\" />
-    <Folder Include="output\" />
   </ItemGroup>
 
 </Project>

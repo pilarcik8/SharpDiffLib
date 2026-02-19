@@ -3,8 +3,10 @@ using KST.SharpDiffLib.Algorithms.MergeDiffs;
 using KST.SharpDiffLib.Algorithms.ResolveConflicts;
 using KST.SharpDiffLib.ConflictManagement;
 using KST.SharpDiffLib.Definition;
+using KST.SharpDiffLib.FastReflection;
 using System;
 using System.IO;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Xml.Linq;
 using System.Xml.Serialization;
@@ -37,38 +39,24 @@ namespace TestKniznice
             }
         }
 
+        static string DirWithFiles = "";
 
-        private const bool HASH_SET_ENABLE = true;
-        private const bool LIST_ENABLE = false;
-        private const bool CLASS_PERSON_ENABLE = false;
-
-        private const int MAX_ITERATION = 100;
-
-        private const string InputFolder = "input";
 
         public static void Main()
         {
-            int enabledCount = 0;
-            if (HASH_SET_ENABLE) enabledCount++;
-            if (LIST_ENABLE) enabledCount++;
-            if (CLASS_PERSON_ENABLE) enabledCount++;
-            if (enabledCount != 1)
-            {
-                Console.WriteLine("Enable only one of HASH_SET_ENABLE, LIST_ENABLE, or CLASS_PERSON_ENABLE.");
-                return;
-            }
-
-            for (int iteration = 0; iteration < MAX_ITERATION; iteration++)
+            string userInput = UserInputTypeOfXML();
+            DirWithFiles = UserInputDirToFiles();
+            int iteration = 0;
+            while (true) 
             {
                 string BaseFile = $"base{iteration}.xml";
                 string LeftFile = $"left{iteration}.xml";
                 string RightFile = $"right{iteration}.xml";
-                string ResultFile = $"result{iteration}.xml";
+                string ResultFile = $"expectedResult{iteration}.xml";
 
-                string projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\"));
-                var basePath = Path.Combine(projectDir, InputFolder, iteration.ToString(), BaseFile);
-                var leftPath = Path.Combine(projectDir, InputFolder, iteration.ToString(), LeftFile);
-                var rightPath = Path.Combine(projectDir, InputFolder, iteration.ToString(), RightFile);
+                var basePath = Path.Combine(DirWithFiles, iteration.ToString(), BaseFile);
+                var leftPath = Path.Combine(DirWithFiles, iteration.ToString(), LeftFile);
+                var rightPath = Path.Combine(DirWithFiles, iteration.ToString(), RightFile);
 
                 if (!File.Exists(basePath) || !File.Exists(leftPath) || !File.Exists(rightPath))
                 {
@@ -80,9 +68,9 @@ namespace TestKniznice
                 var leftDoc = XDocument.Load(leftPath);
                 var rightDoc = XDocument.Load(rightPath);
 
-                if (CLASS_PERSON_ENABLE)
+                if (userInput == "class")
                 {
-                    XmlSerializer serializer = new XmlSerializer(typeof(Person));
+                    XmlSerializer serializer = new(typeof(Person));
                     Person basePerson;
                     using (var reader = baseDoc.Root.CreateReader())
                     {
@@ -99,18 +87,27 @@ namespace TestKniznice
                         rightPerson = (Person)serializer.Deserialize(reader);
                     }
 
-                    var merger = MergerPerson.Instance;
-                    Person resultPerson = merger.Merge(
-                        basePerson,
-                        leftPerson,
-                        rightPerson
-                    );
-                    Export(resultPerson, null, null, $"merged_person_{iteration}");
+                    try
+                    {
+                        var merger = MergerPerson.Instance;
+                        Person resultPerson = merger.Merge(
+                            basePerson,
+                            leftPerson,
+                            rightPerson
+                        );
+                        Export(resultPerson, null, null, $"mergedResult{iteration}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Chyba pri mergovaní osoby v iterácii {iteration}: {ex.Message}");
+                        return;
+                    }
+                    iteration++;
                 }
 
-                if (HASH_SET_ENABLE)
+                if (userInput == "set")
                 {
-                    XmlSerializer serializer = new XmlSerializer(typeof(HashSet<string>));
+                    XmlSerializer serializer = new(typeof(HashSet<string>));
                     HashSet<string> baseSet;
                     using (var reader = baseDoc.Root.CreateReader())
                     {
@@ -127,18 +124,25 @@ namespace TestKniznice
                         rightSet = (HashSet<string>)serializer.Deserialize(reader);
                     }
 
-                    var merger = MergerSet.Instance;
-                    HashSet<string> resultSet = merger.Merge(
-                        baseSet,
-                        leftSet,
-                        rightSet
-                    );
-                    Export(null, resultSet, null, $"merged_set_{iteration}");
+                    try
+                    {
+                        var merger = MergerSet.Instance;
+                        HashSet<string> resultSet = merger.Merge(
+                            baseSet,
+                            leftSet,
+                            rightSet
+                        );
+                        Export(null, resultSet, null, $"mergedResult{iteration}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Chyba pri mergovaní množiny v iterácii {iteration}: {ex.Message}");
+                    }
                 }
 
-                if (LIST_ENABLE)
+                if (userInput == "list")
                 {
-                    XmlSerializer serializer = new XmlSerializer(typeof(List<string>));
+                    XmlSerializer serializer = new(typeof(List<string>));
                     List<string> baseList;
                     using (var reader = baseDoc.Root.CreateReader())
                     {
@@ -154,18 +158,26 @@ namespace TestKniznice
                     {
                         rightList = (List<string>)serializer.Deserialize(reader);
                     }
-                    var merger = MergerList.Instance;
-                    List<string> resultList = merger.Merge(
-                        baseList,
-                        leftList,
-                        rightList
-                    );
-                    Export(null, null, resultList, $"merged_list_{iteration}");
+
+                    try
+                    {
+                        var merger = MergerList.Instance;
+                        List<string> resultList = merger.Merge(
+                            baseList,
+                            leftList,
+                            rightList
+                        );
+                        Export(null, null, resultList, $"mergedResult{iteration}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Chyba pri mergovaní zoznamu v iterácii {iteration}: {ex.Message}");
+                    }
                 }
             }
         }
 
-        private static void Export(Person person, HashSet<string> set, List<string> list, string fileName)
+        private static void Export(Person? person, HashSet<string> set, List<string>? list, string fileName)
         {
             int notNullCount = 0;
             if (person != null) notNullCount++;
@@ -177,38 +189,25 @@ namespace TestKniznice
 
             try
             {
-                // Relatívna cesta ku koreňu projektu
-                string projectDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\"));
-                string outputDir = Path.Combine(projectDir, "output");
 
-                // Vytvorenie priečinku, ak neexistuje
-                Directory.CreateDirectory(outputDir);
-
-                Console.WriteLine($"Výstupné súbory budú uložené do: {outputDir}");
-                string xmlPath = Path.Combine(outputDir, $"{fileName}.xml");
+                string xmlPath = Path.Combine(DirWithFiles, $"{fileName}.xml");
                 if (person != null)
                 {
-                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(Person));
-                    using (var writer = new StreamWriter(xmlPath))
-                    {
-                        xmlSerializer.Serialize(writer, person);
-                    }
+                    XmlSerializer xmlSerializer = new(typeof(Person));
+                    using var writer = new StreamWriter(xmlPath);
+                    xmlSerializer.Serialize(writer, person);
                 }
                 else if (set != null)
                 {
-                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(HashSet<string>));
-                    using (var writer = new StreamWriter(xmlPath))
-                    {
-                        xmlSerializer.Serialize(writer, set);
-                    }
+                    XmlSerializer xmlSerializer = new(typeof(HashSet<string>));
+                    using var writer = new StreamWriter(xmlPath);
+                    xmlSerializer.Serialize(writer, set);
                 }
                 else if (list != null)
                 {
-                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<string>));
-                    using (var writer = new StreamWriter(xmlPath))
-                    {
-                        xmlSerializer.Serialize(writer, list);
-                    }
+                    XmlSerializer xmlSerializer = new(typeof(List<string>));
+                    using var writer = new StreamWriter(xmlPath);
+                    xmlSerializer.Serialize(writer, list);
                 }
                 Console.WriteLine($"XML uložený do: {xmlPath}");
 
@@ -216,6 +215,58 @@ namespace TestKniznice
             catch (Exception ex)
             {
                 Console.WriteLine($"Chyba pri exporte: {ex.Message}");
+            }
+        }
+
+        public static string UserInputTypeOfXML()
+        {
+            string? input = "";
+            while (input != "set" && input != "class" && input != "list")
+            {
+                Console.WriteLine("Vyber či vstup je 'set'/'class'/'list'");
+                input = Console.ReadLine();
+                if (input == null) continue;
+
+                input = input.ToLower();
+            }
+            return input;
+        }
+
+        public static string UserInputDirToFiles()
+        {
+            Console.WriteLine("V priečinku majte očíslované priečinky od 0");
+            Console.WriteLine("V očísloslovanom priečinku majte súbory expectedResult'číslo iterácie'.xml a mergedResult'číslo iterácie.xml'");
+            Console.WriteLine("Prvý priečinok by mal: '0/mergedResult0.xml' a '0/expectedResult0.xml'");
+            Console.WriteLine("---------------------------------------------------------------------------------------------------------------");
+            Console.WriteLine("Vložte absolútnu cestu k priečinku so súbormi");
+
+            while (true)
+            {
+                string? input = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    Console.WriteLine("Zadajte platnú cestu (nie prázdnu). Skúste znova:");
+                    continue;
+                }
+
+                input = input.Trim().Trim('"');
+
+                try
+                {
+                    string full = Path.GetFullPath(input);
+
+                    if (!Directory.Exists(full))
+                    {
+                        Console.WriteLine($"Adresár neexistuje: {full}. Skontrolujte cestu a skúste znova:");
+                        continue;
+                    }
+
+                    return full;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Neplatná cesta: {ex.Message}. Skúste znova:");
+                }
             }
         }
     }
