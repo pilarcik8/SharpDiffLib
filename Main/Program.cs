@@ -1,13 +1,4 @@
-﻿using Bogus;
-using KST.SharpDiffLib.Algorithms.MergeDiffs;
-using KST.SharpDiffLib.Algorithms.ResolveConflicts;
-using KST.SharpDiffLib.ConflictManagement;
-using KST.SharpDiffLib.Definition;
-using KST.SharpDiffLib.FastReflection;
-using System;
-using System.IO;
-using System.Reflection.Metadata.Ecma335;
-using System.Text.Json;
+﻿using KST.SharpDiffLib.Definition;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 
