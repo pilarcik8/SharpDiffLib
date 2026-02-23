@@ -93,7 +93,6 @@ namespace TestKniznice
                         Console.WriteLine($"Chyba pri mergovaní osoby v iterácii {iteration}: {ex.Message}");
                         return;
                     }
-                    iteration++;
                 }
 
                 if (userInput == "set")
@@ -165,6 +164,7 @@ namespace TestKniznice
                         Console.WriteLine($"Chyba pri mergovaní zoznamu v iterácii {iteration}: {ex.Message}");
                     }
                 }
+                iteration++;
             }
         }
 
@@ -180,8 +180,11 @@ namespace TestKniznice
 
             try
             {
+                string subfolderName = "sharpDiffLib";
+                string outputDir = Path.Combine(DirWithFiles, subfolderName);
+                Directory.CreateDirectory(outputDir);
 
-                string xmlPath = Path.Combine(DirWithFiles, $"{fileName}.xml");
+                string xmlPath = Path.Combine(outputDir, $"{fileName}.xml");
                 if (person != null)
                 {
                     XmlSerializer xmlSerializer = new(typeof(Person));
