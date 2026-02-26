@@ -32,6 +32,8 @@ namespace TestKniznice
 
         static string DirWithFiles = "";
 
+        static int ErroredFiles = 0;
+
 
         public static void Main()
         {
@@ -52,6 +54,7 @@ namespace TestKniznice
                 if (!File.Exists(basePath) || !File.Exists(leftPath) || !File.Exists(rightPath))
                 {
                     Console.WriteLine($"Ended at iteration: {iteration}");
+                    Console.WriteLine($"Počet chybně zpracovaných souborů: {ErroredFiles}");
                     return;
                 }
 
@@ -91,7 +94,7 @@ namespace TestKniznice
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Chyba pri mergovaní osoby v iterácii {iteration}: {ex.Message}");
-                        return;
+                        ErroredFiles++;
                     }
                 }
 
@@ -127,6 +130,7 @@ namespace TestKniznice
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Chyba pri mergovaní množiny v iterácii {iteration}: {ex.Message}");
+                        ErroredFiles++;
                     }
                 }
 
@@ -162,13 +166,14 @@ namespace TestKniznice
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Chyba pri mergovaní zoznamu v iterácii {iteration}: {ex.Message}");
+                        ErroredFiles++;
                     }
                 }
                 iteration++;
             }
         }
 
-        private static void Export(Person? person, HashSet<string> set, List<string>? list, string fileName)
+        private static void Export(Person? person, HashSet<string>? set, List<string>? list, string fileName)
         {
             int notNullCount = 0;
             if (person != null) notNullCount++;
