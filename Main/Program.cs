@@ -32,7 +32,7 @@ namespace TestKniznice
 
         static string DirWithFiles = "";
 
-        static int ErroredFiles = 0;
+        static List<int> ErroredFiles = new List<int>();
 
 
         public static void Main()
@@ -54,7 +54,8 @@ namespace TestKniznice
                 if (!File.Exists(basePath) || !File.Exists(leftPath) || !File.Exists(rightPath))
                 {
                     Console.WriteLine($"Ended at iteration: {iteration}");
-                    Console.WriteLine($"Počet chybně zpracovaných souborů: {ErroredFiles}");
+                    string errors = ErroredFiles.Count > 0 ? string.Join(", ", ErroredFiles) : "None";
+                    Console.WriteLine($"Počet chybně zpracovaných souborů: {errors}");
                     return;
                 }
 
@@ -94,7 +95,7 @@ namespace TestKniznice
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Chyba pri mergovaní osoby v iterácii {iteration}: {ex.Message}");
-                        ErroredFiles++;
+                        ErroredFiles.Add(iteration);
                     }
                 }
 
@@ -130,7 +131,7 @@ namespace TestKniznice
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Chyba pri mergovaní množiny v iterácii {iteration}: {ex.Message}");
-                        ErroredFiles++;
+                        ErroredFiles.Add(iteration);
                     }
                 }
 
@@ -166,7 +167,7 @@ namespace TestKniznice
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Chyba pri mergovaní zoznamu v iterácii {iteration}: {ex.Message}");
-                        ErroredFiles++;
+                        ErroredFiles.Add(iteration);
                     }
                 }
                 iteration++;
