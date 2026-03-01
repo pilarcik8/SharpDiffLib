@@ -31,6 +31,8 @@ namespace TestKniznice
         }
 
         static string DirWithFiles = "";
+        static string SubfolderName = "sharpDiffLib";
+
 
         static List<int> ErroredFiles = new List<int>();
 
@@ -55,8 +57,15 @@ namespace TestKniznice
                 {
                     Console.WriteLine($"Ended at iteration: {iteration}");
                     string errors = ErroredFiles.Count > 0 ? string.Join(", ", ErroredFiles) : "None";
-                    Console.WriteLine($"Počet chybně zpracovaných souborů: {errors}");
-                    return;
+                    Console.WriteLine($"Počet chybně zpracovaných souborů: {ErroredFiles.Count}");
+                    Console.WriteLine(errors);
+                    Console.WriteLine(ErroredFiles.Count * 100.0 / iteration + "% konfliktov");
+
+                    if (ErroredFiles.Count > 0)
+                    {
+                        File.WriteAllText(Path.Combine(DirWithFiles, SubfolderName, "sharpDiffErrors.txt"), $"{errors}");
+                    }
+                    break;
                 }
 
                 var baseDoc = XDocument.Load(basePath);
@@ -186,8 +195,7 @@ namespace TestKniznice
 
             try
             {
-                string subfolderName = "sharpDiffLib";
-                string outputDir = Path.Combine(DirWithFiles, subfolderName);
+                string outputDir = Path.Combine(DirWithFiles, SubfolderName);
                 Directory.CreateDirectory(outputDir);
 
                 string xmlPath = Path.Combine(outputDir, $"{fileName}.xml");
@@ -215,6 +223,12 @@ namespace TestKniznice
             catch (Exception ex)
             {
                 Console.WriteLine($"Chyba pri exporte: {ex.Message}");
+            }
+
+            if (ErroredFiles.Count > 0)
+            {
+                Console.WriteLine($"Počet chybně zpracovaných souborů: {ErroredFiles.Count}");
+                Console.WriteLine($"Iterace s chybou: {string.Join(", ", ErroredFiles)}");
             }
         }
 
