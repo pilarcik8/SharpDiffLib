@@ -55,12 +55,11 @@ namespace TestKniznice
 
                 if (!File.Exists(basePath) || !File.Exists(leftPath) || !File.Exists(rightPath))
                 {
-                    Console.WriteLine($"Ended at iteration: {iteration}");
-                    string errors = ErroredFiles.Count > 0 ? string.Join(", ", ErroredFiles) : "None";
-                    Console.WriteLine($"Počet chybně zpracovaných souborů: {ErroredFiles.Count}");
-                    Console.WriteLine(errors);
+                    Console.WriteLine($"Ukončené na iterácii: {iteration}");
+                    string errors = ErroredFiles.Count > 0 ? string.Join(", ", ErroredFiles) : "Žiadne";
+                    Console.WriteLine($"Počet chybne spracovaných súborov: {ErroredFiles.Count}");
+                    Console.WriteLine($"Konfilikty na iteráciach: {errors}");
                     Console.WriteLine(ErroredFiles.Count * 100.0 / iteration + "% konfliktov");
-
                     if (ErroredFiles.Count > 0)
                     {
                         File.WriteAllText(Path.Combine(DirWithFiles, SubfolderName, "sharpDiffErrors.txt"), $"{errors}");
@@ -103,7 +102,7 @@ namespace TestKniznice
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Chyba pri mergovaní osoby v iterácii {iteration}: {ex.Message}");
+                        Console.WriteLine($"Chyba pri zlučovaní osoby v iterácii {iteration}: {ex.Message}");
                         ErroredFiles.Add(iteration);
                     }
                 }
@@ -139,7 +138,7 @@ namespace TestKniznice
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Chyba pri mergovaní množiny v iterácii {iteration}: {ex.Message}");
+                        Console.WriteLine($"Chyba pri zlučovaní množiny v iterácii {iteration}: {ex.Message}");
                         ErroredFiles.Add(iteration);
                     }
                 }
@@ -175,7 +174,7 @@ namespace TestKniznice
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Chyba pri mergovaní zoznamu v iterácii {iteration}: {ex.Message}");
+                        Console.WriteLine($"Chyba pri zlučovaní zoznamu v iterácii {iteration}: {ex.Message}");
                         ErroredFiles.Add(iteration);
                     }
                 }
@@ -191,7 +190,7 @@ namespace TestKniznice
             if (list != null) notNullCount++;
 
             if (notNullCount != 1)
-                throw new ArgumentException("Only one of the parameters can be non-null.");
+                throw new ArgumentException("Iba jeden vstup nesmie byť null.");
 
             try
             {
@@ -217,18 +216,12 @@ namespace TestKniznice
                     using var writer = new StreamWriter(xmlPath);
                     xmlSerializer.Serialize(writer, list);
                 }
-                Console.WriteLine($"XML uložený do: {xmlPath}");
+                Console.WriteLine($"XML uložené do: {xmlPath}");
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Chyba pri exporte: {ex.Message}");
-            }
-
-            if (ErroredFiles.Count > 0)
-            {
-                Console.WriteLine($"Počet chybně zpracovaných souborů: {ErroredFiles.Count}");
-                Console.WriteLine($"Iterace s chybou: {string.Join(", ", ErroredFiles)}");
+                Console.WriteLine($"Chyba pri exportovaní: {ex.Message}");
             }
         }
 
@@ -237,7 +230,7 @@ namespace TestKniznice
             string? input = "";
             while (input != "set" && input != "class" && input != "list")
             {
-                Console.WriteLine("Vyber či vstup je 'set'/'class'/'list'");
+                Console.WriteLine("Vyber typ vstupu: 'set'/'class'/'list'");
                 input = Console.ReadLine();
                 if (input == null) continue;
 
@@ -248,10 +241,10 @@ namespace TestKniznice
 
         public static string UserInputDirToFiles()
         {
-            Console.WriteLine("V priečinku majte očíslované priečinky od 0");
-            Console.WriteLine("Prvý priečinok by mal: '0/base0.xml', '0/left0.xml' a '0/right0.xml'");
-            Console.WriteLine("Druhý priečinok by mal: '1/base1.xml', '1/left1.xml' a '1/right1.xml'");
-            Console.WriteLine("A tak ďalej... Ak sa priečinok alebo súbor z danej iterácie nenájde, program končí.");
+            Console.WriteLine("V priečinku majte očíslované podsložky od 0");
+            Console.WriteLine("Prvý priečinok by mal obsahovať: '0/base0.xml', '0/left0.xml' a '0/right0.xml'");
+            Console.WriteLine("Druhý priečinok by mal obsahovať: '1/base1.xml', '1/left1.xml' a '1/right1.xml'");
+            Console.WriteLine("A tak ďalej... Ak sa priečinok alebo súbor z danej iterácie nenájde, program skončí.");
             Console.WriteLine("---------------------------------------------------------------------------------------------------------------");
             Console.WriteLine("Vložte absolútnu cestu k priečinku so súbormi");
 
